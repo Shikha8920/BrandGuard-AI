@@ -3,87 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrandGuard AI - Brand Governance Platform</title>
+    <title>BrandGuard AI - Enterprise Compliance Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen p-6">
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-8">
-        <header class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-800">🛡️ BrandGuard AI</h1>
-            <p class="text-gray-600">Automated Brand Governance & Policy Checking</p>
-        </header>
+<body class="bg-gray-50 font-sans antialiased text-gray-900">
 
-        <div class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Brand Guidelines / Rules:</label>
-                <textarea id="guidelines" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">Standard Brand Tone: Professional, clear, no exaggerated claims, no competitor mentioning.</textarea>
+    <!-- Header -->
+    <header class="bg-indigo-600 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white tracking-wide">BrandGuard AI <span class="text-indigo-200 text-sm font-normal">| Round 2 Enterprise Edition</span></h1>
+            <span class="text-xs bg-indigo-500 text-white px-3 py-1 rounded-full uppercase tracking-wider font-semibold">Team SOLOSYNTAX</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        
+        <!-- Live Custom Rule Injector Card -->
+        <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-2">⚡ Live Custom Rule Injector</h2>
+            <p class="text-sm text-gray-500 mb-3">Add custom brand guidelines or banned words on the fly to test real-time policy adaptation.</p>
+            
+            <div class="flex gap-3">
+                <input type="text" id="new-rule-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700" placeholder="e.g., hurry, cheap, lowest price">
+                <button onclick="addCustomRule()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg transition duration-200 text-sm shadow">
+                    Add Rule
+                </button>
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Content to Check (Marketing copy, social post, etc.):</label>
-                <textarea id="content" rows="5" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter content here..."></textarea>
-            </div>
-
-            <button onclick="checkContent()" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition">
-                Check Content Against Guidelines
-            </button>
+            <p id="rule-status" class="text-xs text-emerald-600 mt-2 font-medium"></p>
         </div>
 
-        <div id="loading" class="hidden mt-6 text-center text-gray-500">
-            Analyzing content with BrandGuard AI... ⏳
-        </div>
-
-        <div id="result-container" class="hidden mt-6 p-4 bg-gray-100 rounded-lg border border-gray-200">
-            <h2 class="text-xl font-bold text-gray-800 mb-2">Analysis Result:</h2>
-            <div id="analysis-output" class="whitespace-pre-wrap text-gray-700"></div>
-
-            <div class="mt-4 flex gap-4">
-                <button onclick="handleDecision('Approved')" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Approve Content</button>
-                <button onclick="handleDecision('Rejected')" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Request Revision</button>
+        <!-- Input Card -->
+        <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Audit Marketing Copy</h2>
+            <p class="text-sm text-gray-500 mb-4">Paste your social media copy, ad text, or campaign draft below to evaluate against absolute claims, custom rules, and tone consistency.</p>
+            
+            <textarea id="copy-input" rows="4" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-700 text-sm" placeholder="e.g., Get our 100% guaranteed product today! It is the best in market..."></textarea>
+            
+            <div class="mt-4 flex justify-end">
+                <button onclick="runAudit()" id="submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition duration-200 shadow">
+                    Run Compliance Audit
+                </button>
             </div>
         </div>
-    </div>
 
+        <!-- Results Section -->
+        <div id="result-box" class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 hidden mb-10">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-800">Audit Results & Metrics</h3>
+                <div class="flex items-center gap-3">
+                    <div id="score-badge" class="px-4 py-1.5 text-sm font-bold rounded-full bg-green-100 text-green-800 flex items-center gap-1">
+                        Tone Score: <span id="score-val">100</span>/100
+                    </div>
+                    <button onclick="downloadReport()" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
+                        📥 Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Violations Container -->
+            <div class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Detected Violations</h4>
+                <div id="violations-container" class="space-y-2"></div>
+            </div>
+
+            <!-- Smart Auto-Rewrite Box -->
+            <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-lg">💡</span>
+                    <h4 class="font-semibold text-blue-900 text-sm uppercase tracking-wider">Smart Auto-Rewrite Suggestion</h4>
+                </div>
+                <p id="smart-fix-text" class="text-sm text-blue-800 italic mt-1 font-medium"></p>
+                <div id="suggestions-list" class="mt-2 text-xs text-blue-700 space-y-1"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript -->
     <script>
-        async function checkContent() {
-            const guidelines = document.getElementById('guidelines').value;
-            const content = document.getElementById('content').value;
-            const loading = document.getElementById('loading');
-            const resultContainer = document.getElementById('result-container');
-            const output = document.getElementById('analysis-output');
+        let lastAuditData = null;
 
-            if (!content.trim()) {
-                alert('Please enter some content to check!');
+        async function addCustomRule() {
+            const ruleInput = document.getElementById('new-rule-input');
+            const ruleText = ruleInput.value.trim();
+            const statusText = document.getElementById('rule-status');
+
+            if (!ruleText) {
+                alert('Please enter a valid rule phrase.');
                 return;
             }
 
-            loading.classList.remove('hidden');
-            resultContainer.classList.add('hidden');
+            try {
+                const response = await fetch('/add-rule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rule: ruleText })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    statusText.innerText = `✅ ${data.message}`;
+                    ruleInput.value = '';
+                } else {
+                    statusText.innerText = `❌ ${data.message}`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add custom rule.');
+            }
+        }
+
+        async function runAudit() {
+            const text = document.getElementById('copy-input').value.trim();
+            const btn = document.getElementById('submit-btn');
+            
+            if (!text) {
+                alert('Please enter some text to audit.');
+                return;
+            }
+
+            btn.innerText = 'Auditing...';
+            btn.disabled = true;
 
             try {
                 const response = await fetch('/check-brand', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content, guidelines })
+                    body: JSON.stringify({ text: text })
                 });
 
                 const data = await response.json();
-                loading.classList.add('hidden');
-                resultContainer.classList.remove('hidden');
+                lastAuditData = { originalText: text, ...data };
+                
+                document.getElementById('result-box').classList.remove('hidden');
 
-                if (data.success) {
-                    output.textContent = data.analysis;
+                const scoreVal = document.getElementById('score-val');
+                const scoreBadge = document.getElementById('score-badge');
+                scoreVal.innerText = data.tone_score;
+
+                if (data.tone_score >= 75) {
+                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-green-100 text-green-800";
+                } else if (data.tone_score >= 50) {
+                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-yellow-100 text-yellow-800";
                 } else {
-                    output.textContent = 'Error: ' + data.error;
+                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-red-100 text-red-800";
                 }
-            } catch (err) {
-                loading.classList.add('hidden');
-                alert('An error occurred: ' + err.message);
+
+                const vContainer = document.getElementById('violations-container');
+                vContainer.innerHTML = '';
+                
+                if (data.violations.length === 0) {
+                    vContainer.innerHTML = '<div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">✅ No compliance violations detected! Your copy is clean.</div>';
+                } else {
+                    data.violations.forEach(v => {
+                        vContainer.innerHTML += `
+                            <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm flex items-start gap-2">
+                                <span>⚠️</span>
+                                <div><strong>${v.rule}:</strong> ${v.message}</div>
+                            </div>
+                        `;
+                    });
+                }
+
+                document.getElementById('smart-fix-text').innerText = `"${data.smart_fix}"`;
+                
+                const sList = document.getElementById('suggestions-list');
+                sList.innerHTML = '';
+                data.suggestions.forEach(s => {
+                    sList.innerHTML += `<div>• ${s}</div>`;
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Something went wrong during the audit execution.');
+            } finally {
+                btn.innerText = 'Run Compliance Audit';
+                btn.disabled = false;
             }
         }
 
-        function handleDecision(status) {
-            alert('Content marked as: ' + status + '. Workflow completed successfully!');
+        function downloadReport() {
+            if (!lastAuditData) {
+                alert('No audit report available to export.');
+                return;
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastAuditData, null, 4));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "brandguard_audit_report.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
         }
     </script>
 </body>
