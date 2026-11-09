@@ -1,96 +1,106 @@
-from flask import Flask, request, jsonify, render_template
-import re
+import os
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-ABSOLUTE_RULES = [
-    "100% guaranteed",
-    "best in market",
-    "guaranteed",
-    "act now",
-    "limited time only",
-    "risk-free",
-    "proven best"
-]
-
-REPLACEMENTS = {
-    "100% guaranteed": "designed for high reliability",
-    "best in market": "a leading choice in the industry",
-    "guaranteed": "proven",
-    "act now": "explore today",
-    "limited time only": "available now",
-    "risk-free": "secure",
-    "proven best": "industry-recognized"
+# Initial default compliance rules and banned phrases mapping
+# (Phrase to check: [Penalty score, Suggested alternative])
+COMPLIANCE_RULES = {
+    "guaranteed": {
+        "penalty": 25,
+        "alternative": "industry-standard / proven",
+    },
+    "100%": {"penalty": 30, "alternative": "highly reliable"},
+    "best": {"penalty": 15, "alternative": "top-tier / leading"},
+    "cheap": {"penalty": 20, "alternative": "cost-effective / economical"},
+    "free": {"penalty": 10, "alternative": "complimentary"},
 }
 
-def check_rules(text):
-    violations = []
-    text_lower = text.lower()
-    for rule in ABSOLUTE_RULES:
-        if rule in text_lower:
-            violations.append({
-                'rule': rule,
-                'message': f"Potential non-compliant or exaggerated claim detected: '{rule}'."
-            })
-    return violations
 
-def calculate_tone_score(text, violation_count):
-    base_score = 100
-    penalty = 25
-    score = base_score - (violation_count * penalty)
-    return max(score, 0)
+@app.route("/")
+def index():
+  return render_template(
+      "index.html", rules=COMPLIANCE_RULES
+  )  # Ensure index.html exists in your templates folder
 
-def generate_smart_fix(text):
-    fixed_text = text
-    suggestions = []
-    
-    for rule in ABSOLUTE_RULES:
-        if rule in fixed_text.lower():
-            good_phrase = REPLACEMENTS.get(rule, "reviewed phrase")
-            pattern = re.compile(re.escape(rule), re.IGNORECASE)
-            fixed_text = pattern.sub(good_phrase, fixed_text)
-            suggestions.append(f"Replace '{rule}' with '{good_phrase}'")
-            
-    return fixed_text, suggestions
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+@app.route("/analyze", methods=["POST"])
+def analyze_text():
+  data = request.get_json()
+  text = data.get("text", "")
 
-@app.route('/check-brand', methods=['POST'])
-def audit_copy():
-    data = request.get_json()
-    copy_text = data.get('text', '')
-    
-    if not copy_text:
-        return jsonify({'error': 'No text provided'}), 400
+  if not text:
+    return jsonify({"error": "No text provided for analysis"}), 400
 
-    violations = check_rules(copy_text)
-    violation_count = len(violations)
-    
-    tone_score = calculate_tone_score(copy_text, violation_count)
-    fixed_text, suggestions = generate_smart_fix(copy_text)
-    
-    return jsonify({
-        'violations': violations,
-        'violation_count': violation_count,
-        'tone_score': tone_score,
-        'smart_fix': fixed_text,
-        'suggestions': suggestions
-    })
+  score = 100
+  violations_found = []
+  rewritten_text = text
 
-@app.route('/add-rule', methods=['POST'])
+  # Check text against rules (case-insensitive simulation)
+  lower_text = text.lower()
+  for phrase, rule_info in COMPLIANCE_RULES.items():
+    if phrase in lower_text:
+      score -= rule_info["penalty"]
+      violations_found.append({
+          "matched_phrase": phrase,
+          "penalty": rule_info["penalty"],
+          "alternative": rule_info["alternative"],
+      })
+      # Simple replacement for auto-rewrite
+      rewritten_text = (
+          rewritten_text.replace(phrase, rule_info["alternative"])
+          .replace(phrase.capitalize(), rule_info["alternative"].capitalize())
+      )
+
+  # Ensure score doesn't drop below 0
+  score = max(0, score)
+
+  # Risk categorization
+  if score >= 90:
+    risk_level = "Low Risk (Compliant)"
+  elif score >= 70:
+    risk_level = "Medium Risk (Review Recommended)"
+  else:
+    risk_level = "High Risk (Non-Compliant)"
+
+  return jsonify({
+      "original_text": text,
+      "rewritten_text": rewritten_text,
+      "compliance_score": score,
+      "risk_level": risk_level,
+      "violations": violations_found,
+  })
+
+
+@app.route("/add-rule", methods=["POST"])
 def add_rule():
-    data = request.get_json()
-    new_rule = data.get('rule', '').strip().lower()
-    
-    if new_rule and new_rule not in ABSOLUTE_RULES:
-        ABSOLUTE_RULES.append(new_rule)
-        if new_rule not in REPLACEMENTS:
-            REPLACEMENTS[new_rule] = "reviewed phrase"
-        return jsonify({'success': True, 'message': f"Rule '{new_rule}' added successfully!", 'rules': ABSOLUTE_RULES})
-    
-    return jsonify({'success': False, 'message': 'Rule already exists or is empty.'}), 400
+  data = request.get_json()
+  phrase = data.get("phrase", "").strip().lower()
+  penalty = data.get("penalty", 20)
+  alternative = data.get("alternative", "").strip()
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+  if not phrase or not alternative:
+    return jsonify({"error": "Phrase and alternative are required"}), 400
+
+  COMPLIANCE_RULES[phrase] = {"penalty": int(penalty), "alternative": alternative}
+  return jsonify({
+      "message": f"Rule for '{phrase}' added successfully",
+      "rules": COMPLIANCE_RULES,
+  })
+
+
+@app.route("/export-audit", methods=["POST"])
+def export_audit():
+  data = request.get_json()
+  # Generates downloadable audit JSON payload structure
+  audit_trail = {
+      "audit_timestamp": "2026-11-09",
+      "status": "Generated",
+      "analyzed_data": data,
+  }
+  return jsonify(audit_trail)
+
+
+if __name__ == "__main__":
+  port = int(os.environ.get("PORT", 5000))
+  app.run(host="0.0.0.0", port=port)
