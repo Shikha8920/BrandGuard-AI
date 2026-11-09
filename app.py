@@ -19,9 +19,7 @@ COMPLIANCE_RULES = {
 
 @app.route("/")
 def index():
-  return render_template(
-      "index.html", rules=COMPLIANCE_RULES
-  )  # Ensure index.html exists in your templates folder
+  return render_template("index.html", rules=COMPLIANCE_RULES)
 
 
 @app.route("/analyze", methods=["POST"])
@@ -79,8 +77,12 @@ def add_rule():
   penalty = data.get("penalty", 20)
   alternative = data.get("alternative", "").strip()
 
-  if not phrase or not alternative:
-    return jsonify({"error": "Phrase and alternative are required"}), 400
+  # Fallback if only phrase is provided from frontend UI
+  if not alternative:
+    alternative = "approved standard term"
+
+  if not phrase:
+    return jsonify({"error": "Phrase is required"}), 400
 
   COMPLIANCE_RULES[phrase] = {"penalty": int(penalty), "alternative": alternative}
   return jsonify({
@@ -92,7 +94,6 @@ def add_rule():
 @app.route("/export-audit", methods=["POST"])
 def export_audit():
   data = request.get_json()
-  # Generates downloadable audit JSON payload structure
   audit_trail = {
       "audit_timestamp": "2026-11-09",
       "status": "Generated",
