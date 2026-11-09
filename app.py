@@ -3,8 +3,7 @@ from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
-# Initial default compliance rules and banned phrases mapping
-# (Phrase to check: [Penalty score, Suggested alternative])
+# Initial compliance rules mapping
 COMPLIANCE_RULES = {
     "guaranteed": {
         "penalty": 25,
@@ -19,87 +18,78 @@ COMPLIANCE_RULES = {
 
 @app.route("/")
 def index():
-  return render_template("index.html", rules=COMPLIANCE_RULES)
+  return render_template("index.html")
 
 
-@app.route("/analyze", methods=["POST"])
-def analyze_text():
+@app.route("/check-brand", methods=["POST"])
+def check_brand():
   data = request.get_json()
   text = data.get("text", "")
 
   if not text:
-    return jsonify({"error": "No text provided for analysis"}), 400
+    return jsonify({"error": "No text provided"}), 400
 
   score = 100
   violations_found = []
-  rewritten_text = text
+  smart_fix_text = text
 
-  # Check text against rules (case-insensitive simulation)
   lower_text = text.lower()
   for phrase, rule_info in COMPLIANCE_RULES.items():
     if phrase in lower_text:
       score -= rule_info["penalty"]
       violations_found.append({
-          "matched_phrase": phrase,
-          "penalty": rule_info["penalty"],
-          "alternative": rule_info["alternative"],
+          "rule": phrase.upper(),
+          "message": (
+              f"Detected banned/restricted term '{phrase}'. Recommended"
+              f" alternative: '{rule_info['alternative']}'."
+          ),
       })
-      # Simple replacement for auto-rewrite
-      rewritten_text = (
-          rewritten_text.replace(phrase, rule_info["alternative"])
+      smart_fix_text = (
+          smart_fix_text.replace(phrase, rule_info["alternative"])
           .replace(phrase.capitalize(), rule_info["alternative"].capitalize())
       )
 
-  # Ensure score doesn't drop below 0
   score = max(0, score)
 
-  # Risk categorization
-  if score >= 90:
-    risk_level = "Low Risk (Compliant)"
-  elif score >= 70:
-    risk_level = "Medium Risk (Review Recommended)"
-  else:
-    risk_level = "High Risk (Non-Compliant)"
+  suggestions = [
+      "Ensure all marketing claims are backed by verifiable data.",
+      (
+          "Maintain a professional and customer-centric tone across all ad"
+          " copies."
+      ),
+      "Review custom brand guidelines regularly for policy compliance.",
+  ]
 
   return jsonify({
-      "original_text": text,
-      "rewritten_text": rewritten_text,
-      "compliance_score": score,
-      "risk_level": risk_level,
+      "tone_score": score,
       "violations": violations_found,
+      "smart_fix": smart_fix_text,
+      "suggestions": suggestions,
   })
 
 
 @app.route("/add-rule", methods=["POST"])
 def add_rule():
   data = request.get_json()
-  phrase = data.get("phrase", "").strip().lower()
-  penalty = data.get("penalty", 20)
-  alternative = data.get("alternative", "").strip()
+  # Frontend sends 'rule', backend captures it safely
+  phrase = data.get("rule") or data.get("phrase", "")
+  phrase = phrase.strip().lower()
 
-  # Fallback if only phrase is provided from frontend UI
+  if not phrase:
+    return jsonify({"success": False, "message": "Rule phrase is required"})
+
+  penalty = int(data.get("penalty", 20))
+  alternative = data.get("alternative", "").strip()
   if not alternative:
     alternative = "approved standard term"
 
-  if not phrase:
-    return jsonify({"error": "Phrase is required"}), 400
+  COMPLIANCE_RULES[phrase] = {"penalty": penalty, "alternative": alternative}
 
-  COMPLIANCE_RULES[phrase] = {"penalty": int(penalty), "alternative": alternative}
   return jsonify({
-      "message": f"Rule for '{phrase}' added successfully",
+      "success": True,
+      "message": f"Rule for '{phrase}' added successfully!",
       "rules": COMPLIANCE_RULES,
   })
-
-
-@app.route("/export-audit", methods=["POST"])
-def export_audit():
-  data = request.get_json()
-  audit_trail = {
-      "audit_timestamp": "2026-11-09",
-      "status": "Generated",
-      "analyzed_data": data,
-  }
-  return jsonify(audit_trail)
 
 
 if __name__ == "__main__":
