@@ -3,199 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrandGuard AI - Enterprise Compliance Dashboard</title>
+    <title>BrandGuard-AI | Enterprise Compliance Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 font-sans antialiased text-gray-900">
-
-    <!-- Header -->
-    <header class="bg-indigo-600 shadow-md">
-        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-white tracking-wide">BrandGuard AI <span class="text-indigo-200 text-sm font-normal">| Round 2 Enterprise Edition</span></h1>
-            <span class="text-xs bg-indigo-500 text-white px-3 py-1 rounded-full uppercase tracking-wider font-semibold">Team SOLOSYNTAX</span>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <span class="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">🛡️ BrandGuard-AI</span>
+            <span class="text-xs px-2 py-1 bg-blue-900 text-blue-300 rounded-full font-mono">Team SOLOSYNTAX</span>
         </div>
-    </header>
+        <div class="flex items-center space-x-4">
+            <div class="text-sm text-gray-400">
+                DB Status: 
+                {% if db_connected %}
+                    <span class="text-green-400 font-semibold">● Connected (MongoDB)</span>
+                {% else %}
+                    <span class="text-yellow-400 font-semibold">● Fallback Mode</span>
+                {% endif %}
+            </div>
+            <!-- Role Switcher -->
+            <div class="flex items-center space-x-2 bg-gray-700 px-3 py-1.5 rounded-lg">
+                <span class="text-xs text-gray-300 font-medium">Role:</span>
+                <select id="roleSelect" onchange="switchRole(this.value)" class="bg-gray-800 text-white text-xs px-2 py-1 rounded border border-gray-600 focus:outline-none">
+                    {% for r in roles %}
+                        <option value="{{ r }}" {% if r == role %}selected{% endif %}>{{ r }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </nav>
 
     <!-- Main Container -->
-    <main class="max-w-4xl mx-auto px-4 py-8">
-        
-        <!-- Live Custom Rule Injector Card -->
-        <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-2">⚡ Live Custom Rule Injector</h2>
-            <p class="text-sm text-gray-500 mb-3">Add custom brand guidelines or banned words on the fly to test real-time policy adaptation.</p>
-            
-            <div class="flex gap-3">
-                <input type="text" id="new-rule-input" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm text-gray-700" placeholder="e.g., hurry, cheap, lowest price">
-                <button onclick="addCustomRule()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg transition duration-200 text-sm shadow">
-                    Add Rule
-                </button>
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <!-- Left Column: Input & Audit Engine -->
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold mb-2 text-blue-400">📝 Live Content Compliance Auditor</h2>
+                <p class="text-xs text-gray-400 mb-4">Enter marketing copy below to scan for prohibited claims, absolute guarantees, and tone violations.</p>
+                <textarea id="copyInput" rows="6" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Type or paste your marketing copy here (e.g., 'Our product offers 100% guaranteed cure for all skin problems...')..."></textarea>
             </div>
-            <p id="rule-status" class="text-xs text-emerald-600 mt-2 font-medium"></p>
-        </div>
-
-        <!-- Input Card -->
-        <div class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 mb-8">
-            <h2 class="text-lg font-semibold text-gray-800 mb-3">Audit Marketing Copy</h2>
-            <p class="text-sm text-gray-500 mb-4">Paste your social media copy, ad text, or campaign draft below to evaluate against absolute claims, custom rules, and tone consistency.</p>
-            
-            <textarea id="copy-input" rows="4" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-gray-700 text-sm" placeholder="e.g., Get our 100% guaranteed product today! It is the best in market..."></textarea>
-            
-            <div class="mt-4 flex justify-end">
-                <button onclick="runAudit()" id="submit-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2.5 rounded-lg transition duration-200 shadow">
-                    Run Compliance Audit
-                </button>
+            <div class="flex justify-between items-center mt-4">
+                <button onclick="exportAudit()" class="text-xs text-blue-400 hover:underline">📥 Export Audit Report (JSON)</button>
+                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2 rounded-lg text-sm shadow transition">Run Compliance Check</button>
             </div>
         </div>
 
-        <!-- Results Section -->
-        <div id="result-box" class="bg-white shadow-lg rounded-xl p-6 border border-gray-100 hidden mb-10">
-            <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-800">Audit Results & Metrics</h3>
-                <div class="flex items-center gap-3">
-                    <div id="score-badge" class="px-4 py-1.5 text-sm font-bold rounded-full bg-green-100 text-green-800 flex items-center gap-1">
-                        Tone Score: <span id="score-val">100</span>/100
+        <!-- Right Column: Results & Workspace Insights -->
+        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl flex flex-col justify-between">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-indigo-400">📊 Compliance Dashboard</h2>
+                    <div id="scoreBadge" class="text-sm font-bold px-3 py-1 rounded-full bg-gray-700 text-gray-300">Score: --/100</div>
+                </div>
+                
+                <div id="resultsArea" class="space-y-4">
+                    <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center text-gray-500 text-sm">
+                        No audit performed yet. Enter text and click 'Run Compliance Check'.
                     </div>
-                    <button onclick="downloadReport()" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-3 py-2 rounded-lg transition">
-                        📥 Export Report
-                    </button>
                 </div>
             </div>
-
-            <!-- Violations Container -->
-            <div class="mb-6">
-                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-2">Detected Violations</h4>
-                <div id="violations-container" class="space-y-2"></div>
-            </div>
-
-            <!-- Smart Auto-Rewrite Box -->
-            <div class="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="text-lg">💡</span>
-                    <h4 class="font-semibold text-blue-900 text-sm uppercase tracking-wider">Smart Auto-Rewrite Suggestion</h4>
-                </div>
-                <p id="smart-fix-text" class="text-sm text-blue-800 italic mt-1 font-medium"></p>
-                <div id="suggestions-list" class="mt-2 text-xs text-blue-700 space-y-1"></div>
+            <div class="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-400 flex justify-between">
+                <span>Active Workspace Role: <strong class="text-white" id="currentRoleDisplay">{{ role }}</strong></span>
+                <span>CodeTitans India 2026</span>
             </div>
         </div>
-
     </main>
 
-    <!-- JavaScript -->
+    <!-- JavaScript Handlers -->
     <script>
-        let lastAuditData = null;
-
-        async function addCustomRule() {
-            const ruleInput = document.getElementById('new-rule-input');
-            const ruleText = ruleInput.value.trim();
-            const statusText = document.getElementById('rule-status');
-
-            if (!ruleText) {
-                alert('Please enter a valid rule phrase.');
-                return;
-            }
-
-            try {
-                const response = await fetch('/add-rule', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rule: ruleText })
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    statusText.innerText = `✅ ${data.message}`;
-                    ruleInput.value = '';
-                } else {
-                    statusText.innerText = `❌ ${data.message}`;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to add custom rule.');
+        async function switchRole(newRole) {
+            let res = await fetch('/set-role', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({role: newRole})
+            });
+            if(res.ok) {
+                document.getElementById('currentRoleDisplay').innerText = newRole;
             }
         }
 
         async function runAudit() {
-            const text = document.getElementById('copy-input').value.trim();
-            const btn = document.getElementById('submit-btn');
-            
-            if (!text) {
+            let text = document.getElementById('copyInput').value;
+            if(!text.trim()) {
                 alert('Please enter some text to audit.');
                 return;
             }
 
-            btn.innerText = 'Auditing...';
-            btn.disabled = true;
+            let res = await fetch('/api/audit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({text: text})
+            });
 
-            try {
-                const response = await fetch('/check-brand', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
-                });
-
-                const data = await response.json();
-                lastAuditData = { originalText: text, ...data };
-                
-                document.getElementById('result-box').classList.remove('hidden');
-
-                const scoreVal = document.getElementById('score-val');
-                const scoreBadge = document.getElementById('score-badge');
-                scoreVal.innerText = data.tone_score;
-
-                if (data.tone_score >= 75) {
-                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-green-100 text-green-800";
-                } else if (data.tone_score >= 50) {
-                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-yellow-100 text-yellow-800";
-                } else {
-                    scoreBadge.className = "px-4 py-1.5 text-sm font-bold rounded-full bg-red-100 text-red-800";
-                }
-
-                const vContainer = document.getElementById('violations-container');
-                vContainer.innerHTML = '';
-                
-                if (data.violations.length === 0) {
-                    vContainer.innerHTML = '<div class="p-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">✅ No compliance violations detected! Your copy is clean.</div>';
-                } else {
-                    data.violations.forEach(v => {
-                        vContainer.innerHTML += `
-                            <div class="p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm flex items-start gap-2">
-                                <span>⚠️</span>
-                                <div><strong>${v.rule}:</strong> ${v.message}</div>
-                            </div>
-                        `;
-                    });
-                }
-
-                document.getElementById('smart-fix-text').innerText = `"${data.smart_fix}"`;
-                
-                const sList = document.getElementById('suggestions-list');
-                sList.innerHTML = '';
-                data.suggestions.forEach(s => {
-                    sList.innerHTML += `<div>• ${s}</div>`;
-                });
-
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Something went wrong during the audit execution.');
-            } finally {
-                btn.innerText = 'Run Compliance Audit';
-                btn.disabled = false;
+            if(res.ok) {
+                let data = await res.json();
+                renderResults(data);
+            } else {
+                alert('Audit failed to process.');
             }
         }
 
-        function downloadReport() {
-            if (!lastAuditData) {
-                alert('No audit report available to export.');
-                return;
+        function renderResults(data) {
+            let scoreBadge = document.getElementById('scoreBadge');
+            let score = data.compliance_score;
+            scoreBadge.innerText = `Score: ${score}/100`;
+            
+            if(score >= 80) scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-green-900 text-green-300";
+            else if(score >= 50) scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-yellow-900 text-yellow-300";
+            else scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-red-900 text-red-300";
+
+            let area = document.getElementById('resultsArea');
+            let violationsHTML = '';
+            
+            if(data.violations.length === 0) {
+                violationsHTML = `<div class="bg-green-950/40 border border-green-800 text-green-300 p-3 rounded-lg text-xs">✨ No compliance violations detected! Clean copy.</div>`;
+            } else {
+                violationsHTML = `<div class="space-y-2"><p class="text-xs text-red-400 font-semibold">Detected Violations:</p><ul class="list-disc list-inside text-xs space-y-1 text-gray-300">`;
+                data.violations.forEach(v => {
+                    violationsHTML += `<li><span class="text-red-300 font-mono">"${v.word}"</span>: ${v.issue}</li>`;
+                });
+                violationsHTML += `</ul></div>`;
             }
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastAuditData, null, 4));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "brandguard_audit_report.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            area.innerHTML = `
+                ${violationsHTML}
+                <div class="mt-4">
+                    <p class="text-xs text-blue-400 font-semibold mb-1">Suggested Compliant Rewrite:</p>
+                    <div class="bg-gray-900 border border-gray-700 p-3 rounded-lg text-xs text-gray-200 font-mono">${data.suggested_rewrite}</div>
+                </div>
+            `;
+        }
+
+        function exportAudit() {
+            window.location.href = '/api/export-audit';
         }
     </script>
 </body>
