@@ -2,8 +2,7 @@
 ### Enterprise Compliance Governance & AI-Driven Content Auditing Platform
 **CodeTitans India 2026 | Team SOLOSYNTAX**
 * **Team Leader:** Shikha Chaurasia
-* **Repository:** `[https://github.com/Shikha8920/BrandGuard-AI](https://github.com/Shikha8920/BrandGuard-AI)`
-
+* **Repository:** https://github.com/Shikha8920/BrandGuard-AI
 ---
 
 ## 📋 Table of Contents
