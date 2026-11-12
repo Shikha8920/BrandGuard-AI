@@ -1,89 +1,88 @@
-# BrandGuard AI 🛡️
-### Enterprise Compliance Governance Engine | CodeTitans India 2026 (Round 3)
-
-**Team:** SOLOSYNTAX  
-**Team Leader:** Shikha Chaurasia  
-
----
-
-## 🌟 Overview
-**BrandGuard AI** is an advanced, enterprise-grade compliance governance and automated brand tone enforcement platform. Designed for modern marketing teams, agencies, and legal departments, it ensures that all outgoing public copy strictly adheres to brand guidelines, regulatory standards, and tone consistency metrics in real-time through a hybrid rule-engine and semantic LLM fallback layer.
+# BrandGuard-AI 🛡️
+### Enterprise Compliance Governance & AI-Driven Content Auditing Platform
+**CodeTitans India 2026 | Team SOLOSYNTAX**
+* **Team Leader:** Shikha Chaurasia
+* **Repository:** `[https://github.com/Shikha8920/BrandGuard-AI](https://github.com/Shikha8920/BrandGuard-AI)`
 
 ---
 
-## 🚀 Key Enterprise Features & Round 3 Improvements
-
-1. **Multi-Model Compliance LLM Integration (Improvement 1)**
-   - Combines exact-match regex rules with an advanced semantic analysis fallback layer.
-   - Detects nuanced tone violations, sarcastic framing, and high-risk persuasive phrasing beyond simple keyword matching.
-
-2. **Role-Based Enterprise Workspace & Audit Dashboards (Improvement 2)**
-   - Secure session and user role management supporting distinct enterprise workflows (`MARKETER`, `LEGAL_REVIEWER`, `ADMIN`).
-   - Persistent historical audit logging backed by **MongoDB Atlas** cloud storage.
-
-3. **Automated Multi-Platform Browser Extension & API Gateway (Improvement 3)**
-   - Secure webhook API endpoint (`/api/v1/webhook-audit`) protected via request headers.
-   - Enables browser extensions and external Content Management Systems (CMS) to scan live copy instantly before publishing.
-
-4. **Automated Brand Tone Consistency Scoring (0–100 Scale)**
-   - Evaluates marketing copy against pre-defined absolute rules and dynamic penalties.
-   - Features real-time dynamic color-coded badges (Green for compliant, Yellow for moderate, Red for high risk).
-
-5. **Smart Auto-Rewrite Engine & Audit Export**
-   - Instantly suggests professional, compliant alternatives with bracketed verification.
-   - Generates and downloads comprehensive compliance audit trails in JSON format (`brandguard_audit_report.json`) for legal archiving.
+## 📋 Table of Contents
+1. [Overview](#-overview)
+2. [Key Improvements in Final Round (vs. Round 2)](#-key-improvements-in-final-round-vs-round-2)
+3. [Architecture & Core Features](#-architecture--core-features)
+4. [API Endpoints & Documentation](#-api-endpoints--documentation)
+5. [Project Directory Structure](#-project-directory-structure)
+6. [Local Installation & Setup Guide](#-local-installation--setup-guide)
+7. [Comprehensive Benchmark Testing Results](#-benchmark-testing-results)
+8. [Team & Submission Details](#-team--submission-details)
 
 ---
 
-## 💻 Tech Stack
-
-- **Backend:** Python, Flask REST API, Gunicorn (`app.py`)
-- **Database:** MongoDB Atlas (Cloud Persistent Storage with fallback mode)
-- **Frontend:** HTML5, Tailwind CSS, JavaScript (AJAX / Fetch API)
-- **Environment:** Windows OS, VS Code, Render Cloud
+## 🚀 Overview
+**BrandGuard-AI** is an enterprise-grade compliance governance platform built to automate marketing copy auditing across digital channels. It protects brands from regulatory penalties by detecting absolute claims, prohibited health/financial guarantees, and manipulative or sarcastic framing.
 
 ---
 
-## 🔌 API Endpoints Reference
-
-| Endpoint | Method | Description |
-| :--- | :---: | :--- |
-| `/` | `GET` | Enterprise workspace dashboard (Role switcher view) |
-| `/set-role` | `POST` | Switches active user role (`MARKETER`, `LEGAL_REVIEWER`, `ADMIN`) |
-| `/api/audit` | `POST` | Runs hybrid compliance scan on input marketing text |
-| `/api/v1/webhook-audit` | `POST` | External CMS / Browser extension API gateway hook |
-| `/api/export-audit` | `GET` | Exports complete historical audit reports in structured JSON |
+## ⚡ Key Improvements in Final Round (vs. Round 2)
+1. **Strict Whole-Word Boundary Regex Engine (`\b`):** Upgraded string matching logic using `re.escape()` and strict word boundaries (`\b`) to completely eliminate substring bugs (e.g., ensuring words like `secure` remain safe).
+2. **Multi-Model LLM Semantic Fallback Layer:** Detects implicit persuasive framing, sarcasm, and high-risk tonal violations (such as `"trust me bro"` or `"definitely not a scam"`).
+3. **Enterprise JSON Audit Archiving & Export (`/api/export-audit`):** Implemented a dedicated secure audit logging endpoint tracking timestamps, active roles (`MARKETER`, `LEGAL_REVIEWER`, `ADMIN`), and automated smart rewrites.
 
 ---
 
-## ⚙️ Installation & Local Setup
+## 🛠️ Architecture & Core Features
+* **Role-Based Access Control (RBAC):** Dynamic role switcher for `MARKETER`, `LEGAL_REVIEWER`, and `ADMIN`.
+* **Live Compliance Dashboard:** Real-time scoring system (0–100 scale) with dynamic color-coded badges.
+* **Resilient Storage Architecture:** MongoDB Atlas integration with an intelligent in-memory fallback mechanism (`fallback_audit_logs`).
 
-Follow these steps to run BrandGuard AI locally on your machine:
+---
 
+## 🔌 API Endpoints
+* **`POST /api/audit`** - Audits marketing copy against regex rules and semantic checks.
+* **`POST /api/v1/webhook-audit`** - Secure API Gateway webhook for external CMS/extensions.
+* **`GET /api/export-audit`** - Exports full audit logs in structured JSON format.
+* **`POST /set-role`** - Updates active workspace role session.
+
+---
+
+## 💻 Local Installation & Setup Guide
 1. **Clone the Repository:**
    ```bash
-   git clone [https://github.com/Shikha8920/BrandGuard-AI.git](https://github.com/Shikha8920/BrandGuard-AI.git)
+   git clone https://github.com/Shikha8920/BrandGuard-AI.git
    cd BrandGuard-AI
-Install Dependencies:
-Make sure Python is installed, then install required packages:
 
-Bash
-pip install flask pymongo gunicorn dnspython
-Run the Application:
+```
 
-Bash
+2. **Install Dependencies:**
+```bash
+pip install -r requirements.txt
+
+```
+
+
+3. **Run the Flask Development Server:**
+```bash
 python app.py
-Access the Dashboard:
-Open your browser and navigate to:http://127.0.0.1:5000/
 
-🧪 Testing the Workflow
-Test Copy 1 (High Violations & Sarcasm/Absolute Claims Test):
+```
 
-"Get our cheapest 100% guaranteed product today! Hurry, massive discount available for a limited time only. It is the best in market and risk-free. Trust me bro, definitely not a scam."
 
-Test Copy 2 (Clean & Compliant Copy):
+4. **Access the Application:**
+Open your browser and navigate to: `[http://127.0.0.1:5000](http://127.0.0.1:5000)`
 
-"Explore our secure enterprise solution designed for high reliability and industry-recognized performance. Available now for your team."
+---
 
-📜 License
-Developed with 💻 by Team SOLOSYNTAX for CodeTitans India 2026.
+## 📊 Benchmark Testing Results
+
+* **High Violation & Sarcasm:** Score **20/100**, 6 violations detected (Regex + Sarcasm).
+* **Medical / Absolute Claims:** Score **40/100**, 4 prohibited medical claims flagged.
+* **Clean Enterprise Copy:** Score **100/100**, 0 violations (`\b` word boundary verified for `secure`).
+
+---
+
+## 🏆 Team & Submission Details
+
+* **Hackathon:** CodeTitans India 2026
+* **Team Name:** SOLOSYNTAX
+* **Team Leader:** Shikha Chaurasia
+

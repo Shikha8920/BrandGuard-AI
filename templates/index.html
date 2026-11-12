@@ -3,140 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrandGuard-AI | Enterprise Compliance Workspace</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>BrandGuard-AI | Enterprise Compliance Governance</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+        header { background: #1e293b; border-bottom: 1px solid #334155; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .logo-area { display: flex; align-items: center; gap: 12px; }
+        .logo-area h1 { font-size: 20px; font-weight: 600; color: #38bdf8; }
+        .team-badge { background: #0369a1; color: #e0f2fe; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+        .header-controls { display: flex; align-items: center; gap: 20px; }
+        .db-status { font-size: 13px; font-weight: 500; color: #facc15; display: flex; align-items: center; gap: 6px; }
+        .main-container { max-width: 1400px; margin: 30px auto; padding: 0 20px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .card-title { font-size: 18px; font-weight: 600; color: #f8fafc; display: flex; align-items: center; gap: 8px; }
+        textarea { width: 100%; height: 200px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #f8fafc; padding: 14px; font-size: 14px; resize: vertical; outline: none; transition: border-color 0.2s; }
+        textarea:focus { border-color: #38bdf8; }
+        .btn { background: #2563eb; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; text-align: center; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-secondary { background: #334155; color: #cbd5e1; border: none; padding: 12px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+        .btn-secondary:hover { background: #475569; }
+        .export-link { color: #38bdf8; font-size: 13px; text-decoration: none; display: inline-block; margin-top: 4px; }
+        .export-link:hover { text-decoration: underline; }
+        .dashboard-box { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 16px; min-height: 200px; display: flex; flex-direction: column; gap: 12px; }
+        .score-container { display: flex; justify-content: space-between; align-items: center; }
+        .score-badge { padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 16px; }
+        .score-good { background: #065f46; color: #34d399; }
+        .score-bad { background: #7f1d1d; color: #fca5a5; }
+        .score-neutral { background: #334155; color: #94a3b8; }
+        .violations-list { list-style-type: disc; padding-left: 20px; color: #fca5a5; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+        .rewrite-box { background: #1e293b; border: 1px solid #334155; border-radius: 6px; padding: 12px; font-size: 13px; color: #e2e8f0; white-space: pre-wrap; }
+        .footer-info { font-size: 12px; color: #64748b; margin-top: auto; display: flex; justify-content: space-between; }
+    </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
-    <!-- Navbar -->
-    <nav class="bg-gray-800 border-b border-gray-700 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-3">
-            <span class="text-xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">🛡️ BrandGuard-AI</span>
-            <span class="text-xs px-2 py-1 bg-blue-900 text-blue-300 rounded-full font-mono">Team SOLOSYNTAX</span>
+<body>
+    <header>
+        <div class="logo-area">
+            <h1>BrandGuard-AI</h1>
+            <span class="team-badge">Team SOLOSYNTAX</span>
         </div>
-        <div class="flex items-center space-x-4">
-            <div class="text-sm text-gray-400">
-                DB Status: 
-                {% if db_connected %}
-                    <span class="text-green-400 font-semibold">● Connected (MongoDB)</span>
-                {% else %}
-                    <span class="text-yellow-400 font-semibold">● Fallback Mode</span>
-                {% endif %}
+        <div class="header-controls">
+            <div class="db-status">
+                <span>DB Status:</span> 
+                <span id="dbStatusText">{% if db_status %}🟢 Connected (MongoDB Atlas){% else %}🟡 Fallback Mode{% endif %}</span>
             </div>
-            <!-- Role Switcher -->
-            <div class="flex items-center space-x-2 bg-gray-700 px-3 py-1.5 rounded-lg">
-                <span class="text-xs text-gray-300 font-medium">Role:</span>
-                <select id="roleSelect" onchange="switchRole(this.value)" class="bg-gray-800 text-white text-xs px-2 py-1 rounded border border-gray-600 focus:outline-none">
-                    {% for r in roles %}
-                        <option value="{{ r }}" {% if r == role %}selected{% endif %}>{{ r }}</option>
-                    {% endfor %}
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="color: #94a3b8; font-size: 14px;">Role:</span>
+                <select id="roleSelect" onchange="updateRole(this.value)" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 6px 12px; border-radius: 6px; font-weight: 500; cursor: pointer;">
+                    <option value="MARKETER" {% if role == 'MARKETER' %}selected{% endif %}>MARKETER</option>
+                    <option value="LEGAL_REVIEWER" {% if role == 'LEGAL_REVIEWER' %}selected{% endif %}>LEGAL_REVIEWER</option>
+                    <option value="ADMIN" {% if role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
                 </select>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- Main Container -->
-    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <!-- Left Column: Input & Audit Engine -->
-        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl flex flex-col justify-between">
-            <div>
-                <h2 class="text-lg font-semibold mb-2 text-blue-400">📝 Live Content Compliance Auditor</h2>
-                <p class="text-xs text-gray-400 mb-4">Enter marketing copy below to scan for prohibited claims, absolute guarantees, and tone violations.</p>
-                <textarea id="copyInput" rows="6" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-sm text-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Type or paste your marketing copy here (e.g., 'Our product offers 100% guaranteed cure for all skin problems...')..."></textarea>
-            </div>
-            <div class="flex justify-between items-center mt-4">
-                <button onclick="exportAudit()" class="text-xs text-blue-400 hover:underline">📥 Export Audit Report (JSON)</button>
-                <button onclick="runAudit()" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2 rounded-lg text-sm shadow transition">Run Compliance Check</button>
+    <div class="main-container">
+        <!-- Left Card: Input Auditor -->
+        <div class="card">
+            <div class="card-title">📝 Live Content Compliance Auditor</div>
+            <p style="color: #94a3b8; font-size: 13px;">Enter marketing copy below to scan for prohibited claims, absolute guarantees, and tone violations.</p>
+            <textarea id="auditText" placeholder="Type or paste your marketing copy here (e.g., 'Our product offers 100% guaranteed cure for all skin problems...')..."></textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <a href="/api/export-audit" target="_blank" class="export-link">📥 Export Audit Report (JSON)</a>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-secondary" onclick="clearAuditor()">Clear</button>
+                    <button class="btn" onclick="runComplianceCheck()">Run Compliance Check</button>
+                </div>
             </div>
         </div>
 
-        <!-- Right Column: Results & Workspace Insights -->
-        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow-xl flex flex-col justify-between">
-            <div>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-indigo-400">📊 Compliance Dashboard</h2>
-                    <div id="scoreBadge" class="text-sm font-bold px-3 py-1 rounded-full bg-gray-700 text-gray-300">Score: --/100</div>
+        <!-- Right Card: Compliance Dashboard -->
+        <div class="card">
+            <div class="card-title">📊 Compliance Dashboard</div>
+            <div class="dashboard-box">
+                <div class="score-container">
+                    <span style="font-weight: 600; color: #cbd5e1;">Compliance Score</span>
+                    <div id="scoreBadge" class="score-badge score-neutral">Score: --/100</div>
                 </div>
-                
-                <div id="resultsArea" class="space-y-4">
-                    <div class="bg-gray-900 border border-gray-700 rounded-lg p-4 text-center text-gray-500 text-sm">
-                        No audit performed yet. Enter text and click 'Run Compliance Check'.
-                    </div>
+                <div id="dashboardContent" style="color: #94a3b8; font-size: 13px;">
+                    No audit performed yet. Enter text and click 'Run Compliance Check'.
                 </div>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-700 text-xs text-gray-400 flex justify-between">
-                <span>Active Workspace Role: <strong class="text-white" id="currentRoleDisplay">{{ role }}</strong></span>
+            <div class="footer-info">
+                <span>Active Workspace Role: <strong id="activeRoleLabel" style="color: #38bdf8;">{{ role }}</strong></span>
                 <span>CodeTitans India 2026</span>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- JavaScript Handlers -->
     <script>
-        async function switchRole(newRole) {
-            let res = await fetch('/set-role', {
+        async function updateRole(newRole) {
+            const response = await fetch('/set-role', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({role: newRole})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: newRole })
             });
-            if(res.ok) {
-                document.getElementById('currentRoleDisplay').innerText = newRole;
+            const data = await response.json();
+            if (data.success) {
+                document.getElementById('activeRoleLabel').innerText = data.role;
             }
         }
 
-        async function runAudit() {
-            let text = document.getElementById('copyInput').value;
-            if(!text.trim()) {
-                alert('Please enter some text to audit.');
+        async function runComplianceCheck() {
+            const text = document.getElementById('auditText').value;
+            if (!text.trim()) {
+                alert('Please enter some marketing copy to audit.');
                 return;
             }
 
-            let res = await fetch('/api/audit', {
+            const response = await fetch('/api/audit', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: text})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text })
             });
+            const data = await response.json();
 
-            if(res.ok) {
-                let data = await res.json();
-                renderResults(data);
+            const scoreBadge = document.getElementById('scoreBadge');
+            scoreBadge.innerText = `Score: ${data.score}/100`;
+            
+            if (data.score >= 80) {
+                scoreBadge.className = 'score-badge score-good';
             } else {
-                alert('Audit failed to process.');
+                scoreBadge.className = 'score-badge score-bad';
             }
-        }
 
-        function renderResults(data) {
-            let scoreBadge = document.getElementById('scoreBadge');
-            let score = data.compliance_score;
-            scoreBadge.innerText = `Score: ${score}/100`;
-            
-            if(score >= 80) scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-green-900 text-green-300";
-            else if(score >= 50) scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-yellow-900 text-yellow-300";
-            else scoreBadge.className = "text-sm font-bold px-3 py-1 rounded-full bg-red-900 text-red-300";
-
-            let area = document.getElementById('resultsArea');
-            let violationsHTML = '';
-            
-            if(data.violations.length === 0) {
-                violationsHTML = `<div class="bg-green-950/40 border border-green-800 text-green-300 p-3 rounded-lg text-xs">✨ No compliance violations detected! Clean copy.</div>`;
-            } else {
-                violationsHTML = `<div class="space-y-2"><p class="text-xs text-red-400 font-semibold">Detected Violations:</p><ul class="list-disc list-inside text-xs space-y-1 text-gray-300">`;
+            let htmlContent = '';
+            if (data.violations && data.violations.length > 0) {
+                htmlContent += '<div style="font-weight: 600; color: #f87171; margin-bottom: 6px;">Detected Violations:</div>';
+                htmlContent += '<ul class="violations-list">';
                 data.violations.forEach(v => {
-                    violationsHTML += `<li><span class="text-red-300 font-mono">"${v.word}"</span>: ${v.issue}</li>`;
+                    htmlContent += `<li>${v}</li>`;
                 });
-                violationsHTML += `</ul></div>`;
+                htmlContent += '</ul>';
+            } else {
+                htmlContent += '<div style="color: #34d399; font-weight: 500; margin-bottom: 8px;">✨ No compliance violations detected! Clean copy.</div>';
             }
 
-            area.innerHTML = `
-                ${violationsHTML}
-                <div class="mt-4">
-                    <p class="text-xs text-blue-400 font-semibold mb-1">Suggested Compliant Rewrite:</p>
-                    <div class="bg-gray-900 border border-gray-700 p-3 rounded-lg text-xs text-gray-200 font-mono">${data.suggested_rewrite}</div>
-                </div>
-            `;
+            htmlContent += '<div style="font-weight: 600; color: #f8fafc; margin-top: 10px; margin-bottom: 4px;">Suggested Compliant Rewrite:</div>';
+            htmlContent += `<div class="rewrite-box">${data.suggested_rewrite}</div>`;
+
+            document.getElementById('dashboardContent').innerHTML = htmlContent;
         }
 
-        function exportAudit() {
-            window.location.href = '/api/export-audit';
+        function clearAuditor() {
+            document.getElementById('auditText').value = '';
+            const scoreBadge = document.getElementById('scoreBadge');
+            scoreBadge.innerText = 'Score: --/100';
+            scoreBadge.className = 'score-badge score-neutral';
+            document.getElementById('dashboardContent').innerHTML = "No audit performed yet. Enter text and click 'Run Compliance Check'.";
         }
     </script>
 </body>
