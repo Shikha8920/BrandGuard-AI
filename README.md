@@ -1,4 +1,4 @@
-# BrandGuard-AI 🛡️
+## BrandGuard-AI 🛡️
 > **Enterprise Compliance Governance & AI-Driven Content Auditing Platform**
 > **Event: CodeTitans India 2026 | Team: SOLOSYNTAX**  
 > **Team Leader: Shikha Chaurasia**  
