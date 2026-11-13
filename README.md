@@ -56,6 +56,8 @@ BrandGuard-AI/
 ├── Procfile               # Production WSGI process configuration
 ├── requirements.txt       # Python dependencies (Flask, Gunicorn, PyMongo, etc.)
 └── README.md              # Comprehensive project documentation
+```
+
 💻 6. Local Installation & Setup Guide
 Clone the Repository:
 
