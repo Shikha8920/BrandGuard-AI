@@ -1,7 +1,7 @@
 # BrandGuard-AI 🛡️
-> Enterprise Compliance Governance & AI-Driven Content Auditing Platform  
-> **Event:** CodeTitans India 2026 | **Team:** SOLOSYNTAX  
-> **Team Leader:** Shikha Chaurasia  
+> **Enterprise Compliance Governance & AI-Driven Content Auditing Platform**
+> **Event: CodeTitans India 2026 | Team: SOLOSYNTAX**  
+> **Team Leader: Shikha Chaurasia**  
 > **Repository:** [https://github.com/Shikha8920/BrandGuard-AI](https://github.com/Shikha8920/BrandGuard-AI)  
 > **Live Application URL:** [https://brandguard-ai-h7xf.onrender.com/](https://brandguard-ai-h7xf.onrender.com/) *(Note: Hosted on Render cloud tier; please allow 30–50 seconds for initial spin-up from sleep mode if inactive).*
 
