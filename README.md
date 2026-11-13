@@ -67,11 +67,11 @@ BrandGuard-AI/
 ---
 
 ## 💻 6. Local Installation & Setup Guide
-**Clone the Repository:**
 
-Bash
-git clone [https://github.com/Shikha8920/BrandGuard-AI.git](https://github.com/Shikha8920/BrandGuard-AI.git)
-cd BrandGuard-AI
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/Shikha8920/BrandGuard-AI.git
+   cd BrandGuard-AI
 Install Dependencies:
 
 Bash
@@ -87,7 +87,7 @@ Run the Flask Development Server:
 Bash
 python app.py
 Access the Application:
-Open your browser and navigate to: http://127.0.0.1:5000
+Open your browser and navigate to: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
 
