@@ -83,13 +83,19 @@ python app.py
 Access the Application:
 Open your browser and navigate to: http://127.0.0.1:5000
 
+---
+
 ## 📊 7. Comprehensive Benchmark Testing Results
 * **High Violation & Sarcasm:** Score 20/100, 6 violations detected (Regex + Sarcasm).
 * **Medical / Absolute Claims:** Score 40/100, 4 prohibited medical claims flagged.
 * **Clean Enterprise Copy:** Score 100/100, 0 violations (\b word boundary verified for secure).
+
+---
 
 ## 🏆 8. Team & Submission Details
 * **Hackathon: CodeTitans India 2026**
 * **Team Name: SOLOSYNTAX**
 * **Team Leader: Shikha Chaurasia**
 * **Live Cloud Deployment: https://brandguard-ai-h7xf.onrender.com/**
+
+---
