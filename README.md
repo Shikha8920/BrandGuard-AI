@@ -1,9 +1,15 @@
-## BrandGuard-AI 🛡️
-> **Enterprise Compliance Governance & AI-Driven Content Auditing Platform**
-> **Event: CodeTitans India 2026 | Team: SOLOSYNTAX**  
-> **Team Leader: Shikha Chaurasia**  
-> **Repository:** [https://github.com/Shikha8920/BrandGuard-AI](https://github.com/Shikha8920/BrandGuard-AI)  
-> **Live Application URL:** [https://brandguard-ai-h7xf.onrender.com/](https://brandguard-ai-h7xf.onrender.com/) *(Note: Hosted on Render cloud tier; please allow 30–50 seconds for initial spin-up from sleep mode if inactive).*
+# BrandGuard-AI 🛡️
+
+[![Live Deployment](https://img.shields.io/badge/🚀_LIVE_RENDER-App_Online-success?style=for-the-badge&logo=render)](https://brandguard-ai-h7xf.onrender.com/)
+[![Hackathon](https://img.shields.io/badge/🏆_Event-CodeTitans_India_2026-blueviolet?style=for-the-badge)](https://github.com/Shikha8920/BrandGuard-AI)
+[![Team](https://img.shields.io/badge/⚡_Team-SOLOSYNTAX-orange?style=for-the-badge)](https://github.com/Shikha8920/BrandGuard-AI)
+
+**Enterprise Compliance Governance & AI-Driven Content Auditing Platform**  
+* **Event:** CodeTitans India 2026 | **Team:** SOLOSYNTAX  
+* **Team Leader:** Shikha Chaurasia  
+* **Repository:** [https://github.com/Shikha8920/BrandGuard-AI](https://github.com/Shikha8920/BrandGuard-AI)  
+* **Live Application URL:** [https://brandguard-ai-h7xf.onrender.com/](https://brandguard-ai-h7xf.onrender.com/)  
+  *(Note: Hosted on Render cloud tier; please allow 30–50 seconds for initial spin-up from sleep mode if inactive).*
 
 ---
 
