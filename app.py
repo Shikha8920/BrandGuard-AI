@@ -1,198 +1,184 @@
-from datetime import datetime
 import os
 import re
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, render_template, request, jsonify, session
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "brandguard_secret_key_solosyntax_2026"
+app.secret_key = os.getenv("SECRET_KEY", "brandguard_secure_fallback_key")
 
-# In-memory storage fallback for audit logs when DB is in fallback mode
-fallback_audit_logs = []
+# MongoDB Atlas URI configuration
+MONGO_URI = os.getenv("MONGO_URI")
+db = None
+mongo_client = None
 
-# MongoDB Atlas Connection Setup with Fallback Mode
-MONGO_URI = os.environ.get(
-    "MONGO_URI", "mongodb+srv://cluster.mongodb.net/brandguard"
-)
-db_connected = False
 try:
-  client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
-  client.admin.command("ping")
-  db = client["brandguard_db"]
-  audit_collection = db["audit_logs"]
-  db_connected = True
-  print("Connected to MongoDB Atlas successfully!")
+    if MONGO_URI:
+        mongo_client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        mongo_client.admin.command('ping')
+        db = mongo_client["brandguard_db"]
+        print("Connected to MongoDB Atlas successfully!")
+    else:
+        print("Warning: MONGO_URI not found in environment. Running with in-memory fallback.")
 except Exception as e:
-  print(f"Warning: MongoDB connection failed ({e}). Running in fallback mode.")
-  db_connected = False
+    print(f"MongoDB connection failed: {e}. Running with in-memory fallback.")
 
-# Default Banned Words & Absolute Rules
-BANNED_WORDS = [
-    "100%",
-    "guaranteed",
-    "best",
-    "risk-free",
-    "cheapest",
-    "cure",
-    "miracle",
-    "instant",
+# In-memory fallback audit logs if DB is unavailable
+in_memory_logs = []
+
+# Banned absolute claims and trigger words (Layer 1: Deterministic Regex)
+BANNED_REGEX_TERMS = [
+    r"\b100%\b",
+    r"\bguaranteed\b",
+    r"\bbest\b",
+    r"\brisk-free\b",
+    r"\bcheapest\b",
+    r"\bcure\b",
+    r"\bmiracle\b"
 ]
 
-
-def clean_and_rewrite(text, banned_words):
-  """Replaces prohibited terms using strict word boundaries to prevent
-
-  substring bugs (e.g., preventing 'secure' from matching 'sec').
-  """
-  for word in banned_words:
-    # \b ensures exact whole-word matching
-    pattern = r"\b" + re.escape(word) + r"\b"
-    text = re.sub(pattern, "[verified]", text, flags=re.IGNORECASE)
-  return text
-
-
-def semantic_llm_fallback_scan(text):
-  """Simulates a multi-model LLM compliance layer for sarcasm,
-
-  manipulative tone, and high-risk persuasive framing.
-  """
-  violations = []
-  lower_text = text.lower()
-  sarcasm_triggers = ["trust me", "definitely not a scam", "wink wink"]
-  for trigger in sarcasm_triggers:
-    if trigger in lower_text:
-      violations.append(
-          f'"{trigger}": Potential sarcastic or high-risk persuasive framing'
-          " detected by LLM Semantic Layer."
-      )
-  return violations
-
+# High-risk manipulative/sarcastic triggers (Layer 2: Semantic Fallback)
+SEMANTIC_TRIGGER_WORDS = [
+    "trust me",
+    "definitely not a scam",
+    "wink wink",
+    "no questions asked",
+    "foolproof"
+]
 
 @app.route("/")
 def index():
-  role = session.get("role", "MARKETER")
-  return render_template("index.html", role=role, db_status=db_connected)
-
+    if "role" not in session:
+        session["role"] = "MARKETER"
+    return render_template("index.html", current_role=session.get("role"))
 
 @app.route("/set-role", methods=["POST"])
 def set_role():
-  data = request.get_json() or {}
-  new_role = data.get("role", "MARKETER")
-  if new_role in ["MARKETER", "LEGAL_REVIEWER", "ADMIN"]:
-    session["role"] = new_role
-    return jsonify({"success": True, "role": new_role})
-  return jsonify({"success": False, "error": "Invalid role"}), 400
-
+    data = request.get_json() or {}
+    role = data.get("role", "MARKETER")
+    if role in ["MARKETER", "LEGAL_REVIEWER", "ADMIN"]:
+        session["role"] = role
+        return jsonify({"status": "success", "role": role})
+    return jsonify({"status": "error", "message": "Invalid role"}), 400
 
 @app.route("/api/audit", methods=["POST"])
-def audit_text():
-  data = request.get_json() or {}
-  text = data.get("text", "")
-  role = session.get("role", "MARKETER")
+def audit_content():
+    data = request.get_json() or {}
+    text = data.get("text", "").strip()
 
-  if not text:
-    return jsonify({"error": "No text provided"}), 400
+    # Graceful Empty State Validation
+    if not text:
+        return jsonify({
+            "error": "Please enter marketing copy or ad text to run the compliance audit."
+        }), 400
+    
+    # Robust Smart Validation: Extract actual valid words (at least 2 letters each, min 2 words)
+    valid_words = re.findall(r'[a-zA-Z]{2,}', text)
+    if len(valid_words) < 2:
+        return jsonify({
+            "error": "Invalid or insufficient marketing copy. Please enter a meaningful sentence with actual words."
+        }), 400
 
-  violations = []
-
-  # Check regex rule violations with strict word boundaries
-  for word in BANNED_WORDS:
-    pattern = r"\b" + re.escape(word) + r"\b"
-    if re.search(pattern, text, re.IGNORECASE):
-      violations.append(
-          f'"{word}": Absolute or prohibited marketing claim detected (Regex'
-          " Rule)."
-      )
-
-  # Check semantic LLM fallback violations
-  semantic_violations = semantic_llm_fallback_scan(text)
-  violations.extend(semantic_violations)
-
-  # Calculate score (100 base, minus 15 per violation, min 20)
-  score = max(20, 100 - (len(violations) * 15))
-  if len(violations) == 0:
+    violations = []
     score = 100
+    rewritten_text = text
 
-  # Generate suggested rewrite using safe whole-word boundary substitution
-  suggested_rewrite = clean_and_rewrite(text, BANNED_WORDS)
+    # Layer 1: Deterministic Regex Rule Engine
+    for pattern in BANNED_REGEX_TERMS:
+        matches = re.findall(pattern, text, re.IGNORECASE)
+        if matches:
+            for m in set(matches):
+                violations.append(f"Prohibited absolute claim detected: '{m}'")
+                score -= 20
+                rewritten_text = re.sub(re.escape(m), "[verified]", rewritten_text, flags=re.IGNORECASE)
 
-  audit_entry = {
-      "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-      "role": role,
-      "original_text": text,
-      "score": score,
-      "violations_count": len(violations),
-      "violations": violations,
-      "suggested_rewrite": suggested_rewrite,
-  }
+    # Layer 2: Semantic Tone & Manipulative Fallback Layer
+    text_lower = text.lower()
+    for trigger in SEMANTIC_TRIGGER_WORDS:
+        if trigger in text_lower:
+            violations.append(f"High-risk deceptive framing detected: '{trigger}'")
+            score -= 15
+            rewritten_text = rewritten_text.replace(trigger, "[reviewed phrasing]")
 
-  # Store in DB or Fallback Memory list
-  if db_connected:
+    score = max(0, score)
+
+    audit_record = {
+        "text": text,
+        "score": score,
+        "violations": violations,
+        "rewritten_text": rewritten_text,
+        "role": session.get("role", "MARKETER")
+    }
+
+    # Persistent Cloud Integration with Graceful In-Memory Redundancy
     try:
-      audit_collection.insert_one(audit_entry.copy())
-    except Exception:
-      fallback_audit_logs.append(audit_entry)
-  else:
-    fallback_audit_logs.append(audit_entry)
+        if db is not None:
+            db.audits.insert_one(audit_record)
+        else:
+            in_memory_logs.append(audit_record)
+    except Exception as e:
+        print(f"Database write error, falling back to memory: {e}")
+        in_memory_logs.append(audit_record)
 
-  return jsonify({
-      "score": score,
-      "violations": violations,
-      "suggested_rewrite": suggested_rewrite,
-      "role": role,
-  })
-
-
-@app.route("/api/v1/webhook-audit", methods=["POST"])
-def webhook_audit():
-  """API Gateway Webhook for external CMS and browser extensions."""
-  auth_header = request.headers.get("Authorization")
-  if not auth_header or "Bearer" not in auth_header:
-    return jsonify({"error": "Unauthorized webhook request"}), 401
-
-  data = request.get_json() or {}
-  text = data.get("text", "")
-  if not text:
-    return jsonify({"error": "No text provided"}), 400
-
-  violations = []
-  for word in BANNED_WORDS:
-    pattern = r"\b" + re.escape(word) + r"\b"
-    if re.search(pattern, text, re.IGNORECASE):
-      violations.append(f'"{word}": Prohibited claim.')
-
-  score = max(20, 100 - (len(violations) * 20))
-  if not violations:
-    score = 100
-
-  return jsonify({
-      "status": "success",
-      "score": score,
-      "compliant": score >= 80,
-      "violations_detected": len(violations),
-  })
-
+    return jsonify({
+        "status": "success",
+        "score": score,
+        "violations": violations,
+        "rewritten_text": rewritten_text,
+        "active_role": session.get("role", "MARKETER")
+    })
 
 @app.route("/api/export-audit", methods=["GET"])
 def export_audit():
-  logs = []
-  if db_connected:
     try:
-      logs = list(audit_collection.find({}, {"_id": 0}))
+        if db is not None:
+            records = list(db.audits.find({}, {"_id": 0}))
+        else:
+            records = in_memory_logs
     except Exception:
-      logs = fallback_audit_logs
-  else:
-    logs = fallback_audit_logs
+        records = in_memory_logs
 
-  report = {
-      "project": "BrandGuard-AI",
-      "team": "SOLOSYNTAX",
-      "export_timestamp": datetime.now().isoformat(),
-      "total_audits": len(logs),
-      "audit_logs": logs,
-  }
-  return jsonify(report)
+    return jsonify({
+        "project": "BrandGuard-AI",
+        "team": "SOLOSYNTAX",
+        "total_audits": len(records),
+        "audit_logs": records
+    })
 
+@app.route("/api/clear-audits", methods=["POST"])
+def clear_audits():
+    global in_memory_logs
+    in_memory_logs = []
+    try:
+        if db is not None:
+            db.audits.delete_many({})
+    except Exception as e:
+        print(f"Error clearing DB: {e}")
+    return jsonify({"status": "success", "message": "All audit logs cleared successfully!"})
+
+@app.route("/api/v1/webhook-audit", methods=["POST"])
+def webhook_audit():
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized: Missing or invalid Bearer token"}), 401
+
+    data = request.get_json() or {}
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"error": "Text payload is required"}), 400
+
+    score = 100
+    if "guaranteed" in text.lower() or "100%" in text:
+        score = 40
+
+    return jsonify({
+        "webhook_status": "audited",
+        "score": score,
+        "message": "Content scanned successfully via CMS webhook gateway."
+    })
 
 if __name__ == "__main__":
-  app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
