@@ -68,25 +68,26 @@ BrandGuard-AI/
 
 ## 💻 6. Local Installation & Setup Guide
 
-1. **Clone the Repository:**
+**1.Clone the Repository:**
    ```bash
    git clone https://github.com/Shikha8920/BrandGuard-AI.git
    cd BrandGuard-AI
-Install Dependencies:
+```
+**2. Install Dependencies:**
 
-Bash
+```bash
 pip install -r requirements.txt
-Configure Environment Variables:
-Create a .env file in the root directory:
-
-Code snippet
+```
+**3. Configure Environment Variables:**
+```env
 MONGO_URI=your_mongodb_atlas_connection_string
 SECRET_KEY=your_secure_flask_secret_key
-Run the Flask Development Server:
-
-Bash
+```
+**4. Run the Flask Development Server:**
+```bash
 python app.py
-Access the Application:
+```
+**5. Access the Application:**
 Open your browser and navigate to: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
@@ -103,5 +104,3 @@ Open your browser and navigate to: [http://127.0.0.1:5000](http://127.0.0.1:5000
 * **Team Name: SOLOSYNTAX**
 * **Team Leader: Shikha Chaurasia**
 * **Live Cloud Deployment: https://brandguard-ai-h7xf.onrender.com/**
-
----
